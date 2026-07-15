@@ -19,28 +19,23 @@
 
   <div class="controls">
     <input id="search" type="search" placeholder="Rechercher un coureur ou une équipe">
-    <select id="profileFilter" aria-label="Filtrer par profil">
+    <select id="profileFilter">
       <option value="">Tous les profils</option>
-      <option>Leader</option>
-      <option>Sprinteur</option>
-      <option>Grimpeur</option>
-      <option>Rouleur</option>
-      <option>Vallons</option>
-      <option>Autre</option>
+      <option>Leader</option><option>Sprinteur</option><option>Grimpeur</option>
+      <option>Rouleur</option><option>Vallons</option><option>Autre</option>
     </select>
-    <button id="toggleExcluded">Masquer les retirés</button>
+    <button id="toggleChosen">Masquer les choisis</button>
     <button id="adminBtn">Administration</button>
     <button id="importBtn" class="admin-only hidden">Importer Excel</button>
     <input id="excelInput" class="hidden" type="file" accept=".xlsx,.xls">
   </div>
-
   <div id="summary"></div>
 </header>
 
 <main id="app"></main>
 
 <footer>
-  <span class="hospital-symbol">+</span> infirmerie · trait rouge : retiré ou déjà utilisé
+  <span class="abandon-demo">ABANDON</span> abandon · trait rouge : coureur choisi
 </footer>
 
 <div id="toast"></div>
