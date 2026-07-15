@@ -1,0 +1,59 @@
+:root{
+  --paper:#f4f0e7;--card:#fff;--ink:#171717;--muted:#747474;
+  --line:#ddd8cf;--red:#b42318
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--paper);color:var(--ink)}
+header{position:sticky;top:0;z-index:20;padding:14px;background:rgba(244,240,231,.96);backdrop-filter:blur(9px);border-bottom:1px solid var(--line)}
+.header-line{display:flex;align-items:flex-end;gap:12px;max-width:1280px;margin:auto}
+.header-line>div{flex:1}
+h1{margin:0;font-size:20px;letter-spacing:.4px}
+header p{margin:3px 0 0;font-size:12px;color:var(--muted)}
+#adminState{font-size:11px;color:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;max-width:1280px;margin:10px auto 0}
+input,select,button{font:inherit;padding:9px 11px;border:1px solid #ccc7bd;border-radius:9px;background:white}
+#search{flex:1;min-width:210px}
+button{cursor:pointer}
+button.primary{color:white;background:#171717;border-color:#171717}
+#summary{max-width:1280px;margin:9px auto 0;font-size:12px;color:var(--muted)}
+main{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px;max-width:1280px;margin:auto;padding:12px}
+.team{overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.band{height:7px;background:var(--team)}
+.team-head{display:flex;align-items:center;gap:9px;padding:10px 11px 7px}
+.jersey{width:28px;height:22px;flex:0 0 auto;background:var(--team);clip-path:polygon(25% 0,42% 0,46% 15%,54% 15%,58% 0,75% 0,100% 35%,82% 58%,72% 48%,72% 100%,28% 100%,28% 48%,18% 58%,0 35%)}
+.team-name{flex:1;font-size:13px;font-weight:750}
+.count{font-size:11px;font-weight:700;color:var(--muted)}
+.riders{padding:0 11px 9px}
+.rider{display:flex;align-items:center;gap:7px;min-height:34px;padding:5px 1px;border-top:1px solid #f0ede7;font-size:14px}
+.rider:first-child{border-top:0}
+.rider.admin-click{cursor:pointer}
+.rider.crossed{color:#909090;text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:2px}
+.hospital{width:15px;flex:0 0 15px;color:var(--red);font-size:16px;font-weight:900;text-decoration:none!important}
+.rider-name{min-width:0;flex:1;text-decoration:inherit}
+.rider-name strong{font-weight:800}
+.profile{min-width:78px;padding:4px 7px;border-radius:999px;text-align:center;font-size:10px;font-weight:800;text-decoration:none!important}
+.profile-leader{background:#25834b;color:white}
+.profile-sprinteur{background:#408bd1;color:black}
+.profile-grimpeur{background:#ef8b32;color:black}
+.profile-rouleur{background:#e0443e;color:black}
+.profile-vallons{background:#ad3e69;color:black}
+.profile-autre{background:#f0d547;color:black}
+footer{max-width:1280px;margin:auto;padding:0 14px 16px;font-size:11px;color:var(--muted)}
+.hospital-symbol{color:var(--red);font-size:16px;font-weight:900}
+.hidden{display:none!important}
+#toast{position:fixed;left:50%;bottom:18px;z-index:50;transform:translateX(-50%);padding:10px 14px;color:white;background:#171717;border-radius:9px;font-size:13px;opacity:0;pointer-events:none;transition:.2s}
+#toast.show{opacity:1}
+dialog{width:calc(100% - 28px);max-width:390px;padding:0;border:0;border-radius:14px;box-shadow:0 20px 60px #0005}
+dialog::backdrop{background:#0007}
+.modal{padding:18px}
+.modal h2{margin:0 0 12px}
+.modal p{font-size:12px;color:var(--muted)}
+.modal input{width:100%;margin:5px 0}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+#loginError{color:var(--red);font-size:12px}
+@media(max-width:600px){
+  main{grid-template-columns:1fr;padding:9px}
+  header{padding:11px 10px}
+  h1{font-size:18px}
+  .profile{min-width:74px;font-size:9px}
+}

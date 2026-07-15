@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f0e7">
+  <title>Fantasy One — Tour de France 2026</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="header-line">
+    <div>
+      <h1>TOUR DE FRANCE 2026</h1>
+      <p>Fantasy One · liste commune synchronisée</p>
+    </div>
+    <span id="adminState">Consultation</span>
+  </div>
+
+  <div class="controls">
+    <input id="search" type="search" placeholder="Rechercher un coureur ou une équipe">
+    <select id="profileFilter" aria-label="Filtrer par profil">
+      <option value="">Tous les profils</option>
+      <option>Leader</option>
+      <option>Sprinteur</option>
+      <option>Grimpeur</option>
+      <option>Rouleur</option>
+      <option>Vallons</option>
+      <option>Autre</option>
+    </select>
+    <button id="toggleExcluded">Masquer les retirés</button>
+    <button id="adminBtn">Administration</button>
+    <button id="importBtn" class="admin-only hidden">Importer Excel</button>
+    <input id="excelInput" class="hidden" type="file" accept=".xlsx,.xls">
+  </div>
+
+  <div id="summary"></div>
+</header>
+
+<main id="app"></main>
+
+<footer>
+  <span class="hospital-symbol">+</span> infirmerie · trait rouge : retiré ou déjà utilisé
+</footer>
+
+<div id="toast"></div>
+
+<dialog id="loginDialog">
+  <form id="loginForm" class="modal">
+    <h2>Administration</h2>
+    <p>Connexion réservée à l’administrateur.</p>
+    <input id="email" type="email" autocomplete="username" placeholder="Adresse e-mail" required>
+    <input id="password" type="password" autocomplete="current-password" placeholder="Mot de passe" required>
+    <div id="loginError"></div>
+    <div class="actions">
+      <button type="button" id="cancelLogin">Annuler</button>
+      <button type="submit" class="primary">Se connecter</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
