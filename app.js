@@ -28,6 +28,16 @@ function numericPoints(value){
 }
 
 function getRanking(){
+  const startBonus = {
+    "mimi": 1,
+    "baz": 2,
+    "leo": 3,
+    "fefe": 4,
+    "gael": 5,
+    "clem": 7,
+    "yo": 10
+  };
+
   const players = new Map();
 
   teams.flatMap(team => team.riders).forEach(rider => {
@@ -36,38 +46,68 @@ function getRanking(){
 
     if(!rider.choisi || !player || points === null) return;
 
-    if(!players.has(player)){
-      players.set(player, {
+    const playerKey = safeKey(player);
+    if(!players.has(playerKey)){
+      players.set(playerKey, {
         player,
-        total:0,
-        choices:0,
+        total: startBonus[playerKey] || 0,
         stages:new Set(),
         best:null,
         worst:null
       });
     }
 
-    const entry = players.get(player);
+    const entry = players.get(playerKey);
     entry.total += points;
-    entry.choices += 1;
+
     if(rider.etape !== "" && rider.etape !== null && rider.etape !== undefined){
       entry.stages.add(String(rider.etape));
     }
-    entry.best = entry.best === null ? points : Math.min(entry.best, points);
-    entry.worst = entry.worst === null ? points : Math.max(entry.worst, points);
+
+    const choice = {
+      points,
+      rider: `${rider.nom} ${rider.prenom}`.trim(),
+      stage: rider.etape
+    };
+
+    if(entry.best === null || points < entry.best.points){
+      entry.best = choice;
+    }
+
+    if(entry.worst === null || points > entry.worst.points){
+      entry.worst = choice;
+    }
+  });
+
+  Object.entries(startBonus).forEach(([playerKey, bonus]) => {
+    if(!players.has(playerKey)){
+      players.set(playerKey, {
+        player: playerKey.charAt(0).toUpperCase()+playerKey.slice(1),
+        total: bonus,
+        stages:new Set(),
+        best:null,
+        worst:null
+      });
+    }
   });
 
   return [...players.values()]
     .map(entry => ({
       ...entry,
-      average: entry.choices ? entry.total / entry.choices : 0,
       stageCount: entry.stages.size
     }))
     .sort((a,b) =>
       a.total - b.total ||
-      a.average - b.average ||
       a.player.localeCompare(b.player, "fr")
     );
+}
+
+function formatChoice(choice){
+  if(!choice) return "—";
+  const stage = choice.stage !== "" && choice.stage !== null && choice.stage !== undefined
+    ? ` (étape ${choice.stage})`
+    : "";
+  return `${choice.rider}${stage}`;
 }
 
 function renderRanking(){
@@ -103,9 +143,8 @@ function renderRanking(){
           <th>Rang</th>
           <th>Joueur</th>
           <th class="number">Points</th>
-          <th class="number">Choix</th>
-          <th class="number">Moyenne</th>
-          <th class="number">Meilleur</th>
+          <th>Meilleur</th>
+          <th>Pire</th>
         </tr>
       </thead>
       <tbody>
@@ -114,9 +153,8 @@ function renderRanking(){
             <td class="rank"><span class="medal">${medal(index+1)}</span></td>
             <td class="player">${entry.player}</td>
             <td class="number"><strong>${entry.total}</strong></td>
-            <td class="number">${entry.choices}</td>
-            <td class="number">${entry.average.toFixed(1).replace(".",",")}</td>
-            <td class="number">${entry.best}</td>
+            <td>${formatChoice(entry.best)}</td>
+            <td>${formatChoice(entry.worst)}</td>
           </tr>`).join("")}
       </tbody>
     </table>`;
