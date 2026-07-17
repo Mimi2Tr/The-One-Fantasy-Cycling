@@ -10,7 +10,7 @@ const firebaseApp=initializeApp(firebaseConfig);
 const db=getDatabase(firebaseApp);
 const auth=getAuth(firebaseApp);
 
-let teams=DEFAULT_TEAMS, currentUser=null, hideChosen=false;
+let teams=DEFAULT_TEAMS, currentUser=null, hideChosen=false, currentView="riders";
 const $=id=>document.getElementById(id), app=$("app");
 
 function isAdmin(){return currentUser?.uid===ADMIN_UID}
@@ -19,6 +19,119 @@ function clean(value){return String(value??"").trim()}
 function marked(value){return ["X","OUI","YES","1","TRUE","VRAI"].includes(clean(value).toUpperCase())}
 function safeKey(text){return text.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}
 function profileClass(profile){return "profile-"+safeKey(profile)}
+
+
+function numericPoints(value){
+  if(value === "" || value === null || value === undefined) return null;
+  const number = Number(String(value).replace(",", "."));
+  return Number.isFinite(number) ? number : null;
+}
+
+function getRanking(){
+  const players = new Map();
+
+  teams.flatMap(team => team.riders).forEach(rider => {
+    const player = clean(rider.par);
+    const points = numericPoints(rider.points);
+
+    if(!rider.choisi || !player || points === null) return;
+
+    if(!players.has(player)){
+      players.set(player, {
+        player,
+        total:0,
+        choices:0,
+        stages:new Set(),
+        best:null,
+        worst:null
+      });
+    }
+
+    const entry = players.get(player);
+    entry.total += points;
+    entry.choices += 1;
+    if(rider.etape !== "" && rider.etape !== null && rider.etape !== undefined){
+      entry.stages.add(String(rider.etape));
+    }
+    entry.best = entry.best === null ? points : Math.min(entry.best, points);
+    entry.worst = entry.worst === null ? points : Math.max(entry.worst, points);
+  });
+
+  return [...players.values()]
+    .map(entry => ({
+      ...entry,
+      average: entry.choices ? entry.total / entry.choices : 0,
+      stageCount: entry.stages.size
+    }))
+    .sort((a,b) =>
+      a.total - b.total ||
+      a.average - b.average ||
+      a.player.localeCompare(b.player, "fr")
+    );
+}
+
+function renderRanking(){
+  const ranking = getRanking();
+  const container = $("rankingTable");
+  const stages = new Set();
+
+  teams.flatMap(team => team.riders).forEach(rider => {
+    if(rider.choisi && clean(rider.par) && rider.etape !== "" && rider.etape !== null){
+      stages.add(String(rider.etape));
+    }
+  });
+
+  $("rankingMeta").textContent =
+    `${ranking.length} joueur${ranking.length>1?"s":""} · ${stages.size} étape${stages.size>1?"s":""} comptabilisée${stages.size>1?"s":""}`;
+
+  if(!ranking.length){
+    container.innerHTML = `
+      <div class="empty-ranking">
+        Le classement apparaîtra dès que les colonnes
+        <strong>Choisi</strong>, <strong>Par</strong> et <strong>Points</strong>
+        seront renseignées dans l’Excel.
+      </div>`;
+    return;
+  }
+
+  const medal = rank => rank===1 ? "1" : rank===2 ? "2" : rank===3 ? "3" : rank;
+
+  container.innerHTML = `
+    <table class="ranking-table">
+      <thead>
+        <tr>
+          <th>Rang</th>
+          <th>Joueur</th>
+          <th class="number">Points</th>
+          <th class="number">Choix</th>
+          <th class="number">Moyenne</th>
+          <th class="number">Meilleur</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${ranking.map((entry,index) => `
+          <tr class="${index===0?"leader-row":""}">
+            <td class="rank"><span class="medal">${medal(index+1)}</span></td>
+            <td class="player">${entry.player}</td>
+            <td class="number"><strong>${entry.total}</strong></td>
+            <td class="number">${entry.choices}</td>
+            <td class="number">${entry.average.toFixed(1).replace(".",",")}</td>
+            <td class="number">${entry.best}</td>
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+function setView(view){
+  currentView=view;
+  const riders=view==="riders";
+  $("app").classList.toggle("hidden",!riders);
+  $("rankingView").classList.toggle("hidden",riders);
+  $("ridersTab").classList.toggle("active",riders);
+  $("rankingTab").classList.toggle("active",!riders);
+  document.querySelector(".controls").classList.toggle("hidden",!riders);
+  if(!riders) renderRanking();
+}
 
 function render(){
   const query=$("search").value.trim().toLowerCase();
@@ -81,6 +194,7 @@ function render(){
   $("summary").textContent=`${availableTotal} disponibles · ${chosenTotal} choisis · ${abandonTotal} abandons`;
   $("adminState").textContent=isAdmin()?"Mode administrateur":"Consultation";
   $("adminBtn").textContent=isAdmin()?"Se déconnecter":"Administration";
+  if(currentView==="ranking") renderRanking();
   document.querySelectorAll(".admin-only").forEach(el=>el.classList.toggle("hidden",!isAdmin()));
 }
 
@@ -155,4 +269,8 @@ $("excelInput").addEventListener("change",async event=>{
   }
 });
 
+$("ridersTab").addEventListener("click",()=>setView("riders"));
+$("rankingTab").addEventListener("click",()=>setView("ranking"));
+
+setView("riders");
 render();

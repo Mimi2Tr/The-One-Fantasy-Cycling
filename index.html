@@ -30,9 +30,26 @@
     <input id="excelInput" class="hidden" type="file" accept=".xlsx,.xls">
   </div>
   <div id="summary"></div>
+  <nav class="tabs" aria-label="Navigation">
+    <button id="ridersTab" class="tab active">Coureurs</button>
+    <button id="rankingTab" class="tab">Classement</button>
+  </nav>
 </header>
 
 <main id="app"></main>
+
+<section id="rankingView" class="ranking-view hidden">
+  <div class="ranking-panel">
+    <div class="ranking-header">
+      <div>
+        <h2>Classement général</h2>
+        <p>Le plus petit total de points est en tête.</p>
+      </div>
+      <span id="rankingMeta"></span>
+    </div>
+    <div id="rankingTable"></div>
+  </div>
+</section>
 
 <footer>
   <span class="abandon-demo">ABANDON</span> abandon · trait rouge : coureur choisi
