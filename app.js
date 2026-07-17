@@ -194,7 +194,15 @@ function renderRanking(){
     return;
   }
 
-  const medal = rank => rank===1 ? "🥇" : rank===2 ? "🥈" : rank===3 ? "🥉" : rank;
+  const medal = rank => {
+  switch(rank){
+    case 1: return "🥇";
+    case 2: return "🥈";
+    case 3: return "🥉";
+    case 7: return "💩";
+    default: return rank;
+  }
+};
 
   container.innerHTML = `
     <div class="ranking-scroll">
