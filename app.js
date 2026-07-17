@@ -27,62 +27,162 @@ function numericPoints(value){
   return Number.isFinite(number) ? number : null;
 }
 
+function numericStage(value){
+  if(value === "" || value === null || value === undefined) return null;
+  const stage = Number(String(value).replace(",", "."));
+  return Number.isFinite(stage) ? stage : null;
+}
+
+function riderInitials(firstName){
+  const initials = clean(firstName)
+    .split(/[\s-]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase())
+    .join(".");
+  return initials ? `${initials}.` : "";
+}
+
+function compareRankingEntries(a,b){
+  return a.total - b.total ||
+    a.bestStageScore - b.bestStageScore ||
+    b.stageWins - a.stageWins ||
+    a.player.localeCompare(b.player, "fr", {sensitivity:"base"});
+}
+
+function sameRankingCriteria(a,b){
+  return a.total === b.total &&
+    a.bestStageScore === b.bestStageScore &&
+    a.stageWins === b.stageWins;
+}
+
 function getRanking(){
+  const startBonus = {
+    "mimi": 1,
+    "baz": 2,
+    "leo": 3,
+    "fefe": 4,
+    "gael": 5,
+    "clem": 7,
+    "yo": 10
+  };
+
   const players = new Map();
+  const stageScores = new Map();
+
+  Object.entries(startBonus).forEach(([playerKey, bonus]) => {
+    players.set(playerKey, {
+      player: playerKey.charAt(0).toUpperCase()+playerKey.slice(1),
+      total: bonus,
+      best:null,
+      worst:null,
+      stageWins:0,
+      bestStageScore:Number.POSITIVE_INFINITY
+    });
+  });
 
   teams.flatMap(team => team.riders).forEach(rider => {
     const player = clean(rider.par);
     const points = numericPoints(rider.points);
+    const stage = numericStage(rider.etape);
 
     if(!rider.choisi || !player || points === null) return;
 
-    if(!players.has(player)){
-      players.set(player, {
+    const playerKey = safeKey(player);
+    if(!players.has(playerKey)){
+      players.set(playerKey, {
         player,
-        total:0,
-        choices:0,
-        stages:new Set(),
+        total: startBonus[playerKey] || 0,
         best:null,
-        worst:null
+        worst:null,
+        stageWins:0,
+        bestStageScore:Number.POSITIVE_INFINITY
       });
     }
 
-    const entry = players.get(player);
+    const entry = players.get(playerKey);
+    entry.player = player;
     entry.total += points;
-    entry.choices += 1;
-    if(rider.etape !== "" && rider.etape !== null && rider.etape !== undefined){
-      entry.stages.add(String(rider.etape));
+
+    const choice = {
+      points,
+      nom:clean(rider.nom).toUpperCase(),
+      prenom:clean(rider.prenom),
+      stage
+    };
+
+    if(entry.best === null || points < entry.best.points){
+      entry.best = choice;
     }
-    entry.best = entry.best === null ? points : Math.min(entry.best, points);
-    entry.worst = entry.worst === null ? points : Math.max(entry.worst, points);
+
+    if(entry.worst === null || points > entry.worst.points){
+      entry.worst = choice;
+    }
+
+    if(stage !== null){
+      if(!stageScores.has(stage)) stageScores.set(stage,new Map());
+      const scores = stageScores.get(stage);
+      scores.set(playerKey,(scores.get(playerKey) || 0) + points);
+    }
   });
 
-  return [...players.values()]
+  stageScores.forEach(scores => {
+    const values = [...scores.values()];
+    if(!values.length) return;
+    const stageBest = Math.min(...values);
+
+    scores.forEach((score,playerKey) => {
+      const entry = players.get(playerKey);
+      if(!entry) return;
+      entry.bestStageScore = Math.min(entry.bestStageScore,score);
+      if(score === stageBest) entry.stageWins += 1;
+    });
+  });
+
+  const ranking = [...players.values()]
     .map(entry => ({
       ...entry,
-      average: entry.choices ? entry.total / entry.choices : 0,
-      stageCount: entry.stages.size
+      bestStageScore:Number.isFinite(entry.bestStageScore)
+        ? entry.bestStageScore
+        : Number.POSITIVE_INFINITY
     }))
-    .sort((a,b) =>
-      a.total - b.total ||
-      a.average - b.average ||
-      a.player.localeCompare(b.player, "fr")
-    );
+    .sort(compareRankingEntries);
+
+  let previous = null;
+  ranking.forEach((entry,index) => {
+    entry.rank = previous && sameRankingCriteria(entry,previous)
+      ? previous.rank
+      : index + 1;
+    previous = entry;
+  });
+
+  return ranking;
+}
+
+function formatChoice(choice){
+  if(!choice) return "—";
+  const stage = choice.stage !== null ? ` ; étape ${choice.stage}` : "";
+  const identity = `${choice.nom} ${riderInitials(choice.prenom)}`.trim();
+  return `${choice.points} pts (${identity}${stage})`;
+}
+
+function getLatestStage(){
+  const stages = teams
+    .flatMap(team => team.riders)
+    .map(rider => numericStage(rider.etape))
+    .filter(stage => stage !== null);
+  return stages.length ? Math.max(...stages) : null;
 }
 
 function renderRanking(){
   const ranking = getRanking();
   const container = $("rankingTable");
-  const stages = new Set();
+  const latestStage = getLatestStage();
 
-  teams.flatMap(team => team.riders).forEach(rider => {
-    if(rider.choisi && clean(rider.par) && rider.etape !== "" && rider.etape !== null){
-      stages.add(String(rider.etape));
-    }
-  });
-
+  $("rankingTitle").textContent = latestStage === null
+    ? "Classement général"
+    : `Classement général – après l’étape ${latestStage}`;
   $("rankingMeta").textContent =
-    `${ranking.length} joueur${ranking.length>1?"s":""} · ${stages.size} étape${stages.size>1?"s":""} comptabilisée${stages.size>1?"s":""}`;
+    `${ranking.length} joueur${ranking.length>1?"s":""}`;
 
   if(!ranking.length){
     container.innerHTML = `
@@ -94,32 +194,40 @@ function renderRanking(){
     return;
   }
 
-  const medal = rank => rank===1 ? "1" : rank===2 ? "2" : rank===3 ? "3" : rank;
+  const medal = rank => {
+  switch(rank){
+    case 1: return "🥇";
+    case 2: return "🥈";
+    case 3: return "🥉";
+    case 7: return "💩";
+    default: return rank;
+  }
+};
 
   container.innerHTML = `
-    <table class="ranking-table">
-      <thead>
-        <tr>
-          <th>Rang</th>
-          <th>Joueur</th>
-          <th class="number">Points</th>
-          <th class="number">Choix</th>
-          <th class="number">Moyenne</th>
-          <th class="number">Meilleur</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${ranking.map((entry,index) => `
-          <tr class="${index===0?"leader-row":""}">
-            <td class="rank"><span class="medal">${medal(index+1)}</span></td>
-            <td class="player">${entry.player}</td>
-            <td class="number"><strong>${entry.total}</strong></td>
-            <td class="number">${entry.choices}</td>
-            <td class="number">${entry.average.toFixed(1).replace(".",",")}</td>
-            <td class="number">${entry.best}</td>
-          </tr>`).join("")}
-      </tbody>
-    </table>`;
+    <div class="ranking-scroll">
+      <table class="ranking-table">
+        <thead>
+          <tr>
+            <th>Rang</th>
+            <th>Joueur</th>
+            <th class="number">Points</th>
+            <th>Meilleur</th>
+            <th>Pire</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${ranking.map(entry => `
+            <tr class="${entry.rank===1?"leader-row":""}">
+              <td class="rank"><span class="medal">${medal(entry.rank)}</span></td>
+              <td class="player">${entry.player}</td>
+              <td class="number"><strong>${entry.total}</strong></td>
+              <td class="choice-cell">${formatChoice(entry.best)}</td>
+              <td class="choice-cell">${formatChoice(entry.worst)}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>`;
 }
 
 function setView(view){
