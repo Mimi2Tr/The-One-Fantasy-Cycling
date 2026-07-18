@@ -29,7 +29,9 @@
     <button id="importBtn" class="admin-only hidden">Importer Excel</button>
     <input id="excelInput" class="hidden" type="file" accept=".xlsx,.xls">
   </div>
+
   <div id="summary"></div>
+
   <nav class="tabs" aria-label="Navigation">
     <button id="ridersTab" class="tab active">Coureurs</button>
     <button id="rankingTab" class="tab">Classement</button>
@@ -43,10 +45,18 @@
     <div class="ranking-header">
       <div>
         <h2 id="rankingTitle">Classement général</h2>
-        <p>Le plus petit total de points est en tête.</p>
+        <p id="rankingSubtitle">Le plus petit total de points est en tête.</p>
       </div>
-      <span id="rankingMeta"></span>
+
+      <div class="ranking-tools">
+        <label for="rankingMode">Afficher</label>
+        <select id="rankingMode" aria-label="Choisir le classement">
+          <option value="general">Classement général</option>
+        </select>
+        <span id="rankingMeta"></span>
+      </div>
     </div>
+
     <div id="rankingTable"></div>
   </div>
 </section>
@@ -56,6 +66,19 @@
 </footer>
 
 <div id="toast"></div>
+
+<dialog id="playerDialog" class="player-dialog">
+  <div class="player-modal">
+    <div class="player-modal-header">
+      <div>
+        <h2 id="playerDialogTitle">Détail du joueur</h2>
+        <p id="playerDialogSummary"></p>
+      </div>
+      <button type="button" id="closePlayerDialog" class="close-dialog" aria-label="Fermer">×</button>
+    </div>
+    <div id="playerDialogContent"></div>
+  </div>
+</dialog>
 
 <dialog id="loginDialog">
   <form id="loginForm" class="modal">
