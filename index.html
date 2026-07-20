@@ -17,6 +17,8 @@
     <span id="adminState">Consultation</span>
   </div>
 
+  <div id="gameBanner" class="game-banner hidden"></div>
+
   <div class="controls">
     <input id="search" type="search" placeholder="Rechercher un coureur ou une équipe">
     <select id="profileFilter">
@@ -24,8 +26,10 @@
       <option>Leader</option><option>Sprinteur</option><option>Grimpeur</option>
       <option>Rouleur</option><option>Vallons</option><option>Autre</option>
     </select>
-    <button id="toggleChosen">Masquer les choisis</button>
+    <button id="toggleChosen">Masquer les indisponibles</button>
+    <button id="playerChoiceBtn" class="choice-button hidden">Choix du joueur</button>
     <button id="adminBtn">Administration</button>
+    <button id="adminGameBtn" class="admin-only hidden">Gestion de l’étape</button>
     <button id="importBtn" class="admin-only hidden">Importer Excel</button>
     <input id="excelInput" class="hidden" type="file" accept=".xlsx,.xls">
   </div>
@@ -47,16 +51,14 @@
         <h2 id="rankingTitle">Classement général</h2>
         <p id="rankingSubtitle">Le plus petit total de points est en tête.</p>
       </div>
-
       <div class="ranking-tools">
         <label for="rankingMode">Afficher</label>
-        <select id="rankingMode" aria-label="Choisir le classement">
+        <select id="rankingMode">
           <option value="general">Classement général</option>
         </select>
         <span id="rankingMeta"></span>
       </div>
     </div>
-
     <div id="rankingTable"></div>
   </div>
 </section>
@@ -67,16 +69,65 @@
 
 <div id="toast"></div>
 
-<dialog id="playerDialog" class="player-dialog">
-  <div class="player-modal">
-    <div class="player-modal-header">
-      <div>
-        <h2 id="playerDialogTitle">Détail du joueur</h2>
-        <p id="playerDialogSummary"></p>
-      </div>
-      <button type="button" id="closePlayerDialog" class="close-dialog" aria-label="Fermer">×</button>
+<dialog id="playerDialog" class="wide-dialog">
+  <div class="modal-shell">
+    <div class="modal-header">
+      <div><h2 id="playerDialogTitle"></h2><p id="playerDialogSummary"></p></div>
+      <button class="close-dialog" data-close="playerDialog">×</button>
     </div>
     <div id="playerDialogContent"></div>
+  </div>
+</dialog>
+
+<dialog id="identityDialog">
+  <div class="modal">
+    <h2 id="identityTitle">Es-tu bien XXXX ?</h2>
+    <p>Le choix sera enregistré au nom de ce joueur.</p>
+    <div class="actions">
+      <button id="identityNo">Non</button>
+      <button id="identityYes" class="primary">Oui, c’est moi</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="notPlayerDialog">
+  <div class="modal">
+    <h2>Pas encore ton tour</h2>
+    <p id="notPlayerMessage"></p>
+    <div class="actions"><button class="primary" data-close="notPlayerDialog">Compris</button></div>
+  </div>
+</dialog>
+
+<dialog id="confirmPickDialog">
+  <div class="modal">
+    <h2>Confirmer le choix</h2>
+    <p id="confirmPickText"></p>
+    <div class="actions">
+      <button id="cancelPick">Annuler</button>
+      <button id="confirmPick" class="primary">Confirmer définitivement</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="riderAdminDialog">
+  <div class="modal">
+    <h2 id="riderAdminTitle">Gestion du coureur</h2>
+    <p id="riderAdminStatus"></p>
+    <div class="stack-actions">
+      <button id="toggleAbandonBtn" class="danger"></button>
+      <button id="cancelLastPickBtn" class="hidden">Annuler ce choix en cours</button>
+      <button data-close="riderAdminDialog">Fermer</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="adminGameDialog" class="wide-dialog">
+  <div class="modal-shell">
+    <div class="modal-header">
+      <div><h2>Gestion de l’étape</h2><p id="adminGameSummary"></p></div>
+      <button class="close-dialog" data-close="adminGameDialog">×</button>
+    </div>
+    <div id="adminGameContent" class="admin-game-content"></div>
   </div>
 </dialog>
 
