@@ -84,17 +84,34 @@ function getStageRanking(stage){
 function formatChoice(c){if(!c)return"—";return`${c.points} pt${c.points>1?"s":""} (${c.rider}${c.stage!==null?` ; étape ${c.stage}`:""})`}
 function medal(rank,total){if(rank===1)return"🥇";if(rank===2)return"🥈";if(rank===3)return"🥉";if(rank===total)return"💩";return rank}
 
+function renderPickHistory(){
+  const picks=Object.values(gamePicks())
+    .filter(p=>p?.player&&p?.rider)
+    .sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+
+  if(!picks.length)return "";
+
+  return `<div class="pick-history">${picks.map((pick,index)=>`
+    <div class="pick-line ${index===picks.length-1?"latest-pick":""}">
+      <span class="pick-player">${pick.player}</span>
+      <span class="pick-arrow">→</span>
+      <span class="pick-rider">${pick.rider}</span>
+    </div>`).join("")}</div>`;
+}
+
 function renderGameBanner(){
   const banner=$("gameBanner"),button=$("playerChoiceBtn");
   if(!game){banner.classList.add("hidden");button.classList.add("hidden");return}
   banner.classList.remove("hidden");
+  const history=renderPickHistory();
+
   if(game.phase==="selection"){
     const done=Object.keys(gamePicks()).length;
-    banner.innerHTML=`<strong>Étape ${game.currentStage} — C’est au tour de ${currentPlayerName()}</strong><span>${done}/7 choix enregistrés.</span>`;
+    banner.innerHTML=`<strong>Étape ${game.currentStage} — C’est au tour de ${currentPlayerName()}</strong><span>${done}/7 choix enregistrés.</span>${history}`;
     button.classList.remove("hidden");
     button.textContent=`Choix de ${currentPlayerName()}`;
   }else if(game.phase==="results"){
-    banner.innerHTML=`<strong>Étape ${game.currentStage} — Tous les choix sont enregistrés</strong><span>En attente de la saisie des résultats par l’administrateur.</span>`;
+    banner.innerHTML=`<strong>Étape ${game.currentStage} — Tous les choix sont enregistrés</strong><span>En attente de la saisie des résultats par l’administrateur.</span>${history}`;
     button.classList.add("hidden");
   }else{
     banner.innerHTML=`<strong>Tour terminé</strong><span>Le classement général est définitif après l’étape 21.</span>`;

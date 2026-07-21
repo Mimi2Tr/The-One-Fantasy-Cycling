@@ -83,3 +83,11 @@ dialog::backdrop{background:#0007}
   .general-table th:nth-child(4),.general-table td:nth-child(4){font-size:11px}
   .player-table th:nth-child(4),.player-table td:nth-child(4){display:none}
 }
+
+.pick-history{display:grid;gap:4px;margin-top:9px;padding-top:9px;border-top:1px solid #e7dfbd}
+.pick-line{display:flex;align-items:baseline;gap:7px;font-size:12px;line-height:1.35}
+.pick-player{font-weight:750}
+.pick-arrow{color:var(--muted)}
+.pick-rider{min-width:0}
+.latest-pick{font-weight:800;animation:pickFade .45s ease-out}
+@keyframes pickFade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
