@@ -74,12 +74,52 @@ function getRanking(){
 function inverseOrder(){return getRanking().slice().reverse().map(e=>e.playerKey)}
 function getStageRanking(stage){
   const players=new Map();
-  PLAYER_KEYS.forEach(k=>players.set(k,{playerKey:k,player:playerDisplayName(k),rider:"—",points:null}));
-  allRiders().forEach(r=>{
-    const player=clean(r.par);if(!r.choisi||!player||numericStage(r.etape)!==stage)return;
-    players.set(safeKey(player),{playerKey:safeKey(player),player,rider:riderName(r),points:numericPoints(r.points)});
+
+  PLAYER_KEYS.forEach(playerKey=>players.set(playerKey,{
+    playerKey,
+    player:playerDisplayName(playerKey),
+    rider:"—",
+    points:null,
+    cumulative:START_BONUS[playerKey]||0
+  }));
+
+  allRiders().forEach(rider=>{
+    const player=clean(rider.par);
+    const playerKey=safeKey(player);
+    const riderStage=numericStage(rider.etape);
+    const riderPoints=numericPoints(rider.points);
+
+    if(!rider.choisi||!player||riderPoints===null)return;
+
+    if(!players.has(playerKey)){
+      players.set(playerKey,{
+        playerKey,
+        player,
+        rider:"—",
+        points:null,
+        cumulative:0
+      });
+    }
+
+    const entry=players.get(playerKey);
+
+    if(riderStage!==null&&riderStage<=stage){
+      entry.cumulative+=riderPoints;
+    }
+
+    if(riderStage===stage){
+      entry.rider=riderName(rider);
+      entry.points=riderPoints;
+    }
   });
-  return [...players.values()].sort((a,b)=>a.points===null&&b.points!==null?1:a.points!==null&&b.points===null?-1:a.points!==null&&b.points!==null&&a.points!==b.points?a.points-b.points:a.player.localeCompare(b.player,"fr"));
+
+  return [...players.values()].sort((a,b)=>
+    a.points===null&&b.points!==null?1:
+    a.points!==null&&b.points===null?-1:
+    a.points!==null&&b.points!==null&&a.points!==b.points?a.points-b.points:
+    a.cumulative-b.cumulative||
+    a.player.localeCompare(b.player,"fr")
+  );
 }
 function formatChoice(c){if(!c)return"—";return`${c.points} pt${c.points>1?"s":""} (${c.rider}${c.stage!==null?` ; étape ${c.stage}`:""})`}
 function medal(rank,total){if(rank===1)return"🥇";if(rank===2)return"🥈";if(rank===3)return"🥉";if(rank===total)return"💩";return rank}
@@ -133,9 +173,48 @@ function renderGeneralRanking(){
   bindPlayerRows();
 }
 function renderStageRanking(stage){
-  const ranking=getStageRanking(stage),completed=ranking.filter(e=>e.points!==null).length;
-  $("rankingTitle").textContent=`Classement de l'étape ${stage}`;$("rankingSubtitle").textContent="Le coureur ayant marqué le moins de points remporte l’étape.";$("rankingMeta").textContent=`${completed}/${ranking.length} résultats renseignés`;
-  $("rankingTable").innerHTML=`<table class="ranking-table"><thead><tr><th>Rang</th><th>Joueur</th><th>Coureur choisi</th><th class="number">Points</th></tr></thead><tbody>${ranking.map((e,i)=>{const r=e.points===null?"—":ranking.slice(0,i).filter(x=>x.points!==null).length+1;return`<tr class="${r===1?"leader-row ":""}clickable-player ${e.points===null?"pending":""}" data-player="${e.playerKey}" tabindex="0"><td class="rank"><span class="medal">${e.points===null?"—":medal(r,completed)}</span></td><td class="player">${e.player}</td><td>${e.rider}</td><td class="number"><strong>${e.points??"—"}</strong></td></tr>`}).join("")}</tbody></table>`;bindPlayerRows();
+  const ranking=getStageRanking(stage);
+  const completed=ranking.filter(entry=>entry.points!==null).length;
+
+  $("rankingTitle").textContent=`Classement de l'étape ${stage}`;
+  $("rankingSubtitle").textContent=`Points de l'étape et cumul général après l'étape ${stage}.`;
+  $("rankingMeta").textContent=`${completed}/${ranking.length} résultats renseignés`;
+
+  let previousPoints=null;
+  let previousRank=0;
+  let completedIndex=0;
+
+  $("rankingTable").innerHTML=`<table class="ranking-table stage-table">
+    <thead>
+      <tr>
+        <th>Rang</th>
+        <th>Joueur</th>
+        <th>Coureur choisi</th>
+        <th class="number">Points étape</th>
+        <th class="number">Cumul</th>
+      </tr>
+    </thead>
+    <tbody>${ranking.map(entry=>{
+      let rank="—";
+
+      if(entry.points!==null){
+        completedIndex++;
+        rank=entry.points===previousPoints?previousRank:completedIndex;
+        previousPoints=entry.points;
+        previousRank=rank;
+      }
+
+      return`<tr class="${rank===1?"leader-row ":""}clickable-player ${entry.points===null?"pending":""}" data-player="${entry.playerKey}" tabindex="0">
+        <td class="rank"><span class="medal">${entry.points===null?"—":medal(rank,completed)}</span></td>
+        <td class="player">${entry.player}</td>
+        <td>${entry.rider}</td>
+        <td class="number"><strong>${entry.points??"—"}</strong></td>
+        <td class="number"><strong>${entry.cumulative}</strong></td>
+      </tr>`;
+    }).join("")}</tbody>
+  </table>`;
+
+  bindPlayerRows();
 }
 function renderRanking(){populateRankingModes();rankingMode==="general"?renderGeneralRanking():renderStageRanking(Number(rankingMode.replace("stage-","")))}
 
